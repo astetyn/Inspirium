@@ -16,5 +16,11 @@ void PositionModule::slowUpdate() {
 }
 
 void PositionModule::sleep() {
-    //TODO pull Serial UART pins low
+    
+    // RX+TX PINS NEO
+    pinMode(10, OUTPUT);
+    pinMode(11, OUTPUT);
+    digitalWrite(10, LOW);
+    digitalWrite(11, LOW);
+
 }
