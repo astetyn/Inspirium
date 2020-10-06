@@ -8,8 +8,8 @@ struct TaskNode {
         TYPE_DISTANCE
     } type;
 
-    char motor1 = 127;
-    char motor2 = 127;
+    int motor1 = 127;
+    int motor2 = 127;
 
     TaskNode *next;
 

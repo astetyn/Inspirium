@@ -3,9 +3,12 @@
 
 #include "Wire.h"
 #include "TaskList.h"
+#include "PowerState.h"
 
+static const int DRIVER_EN_PIN = 7;
 static const int ENCODER_INTERRUPT_PIN_1 = 6;
 static const int ENCODER_INTERRUPT_PIN_2 = 12;
+static const int DRIVER_FAULT_INT_PIN = 10;
 static const int MOTOR_1_A_PIN = 0;
 static const int MOTOR_1_B_PIN = 1;
 static const int MOTOR_2_A_PIN = 2;
@@ -29,15 +32,20 @@ class MotorController {
         void begin();
         void update();
         void reset();
+        void idle();
+        void wakeUp();
         void sleep();
         void setPWMFreq(int freq);
         void addTask(TaskNode *task);
         void executeNextTask();
         void stopCurrentTask();
         void forceStop();
+        void move(int motor1, int motor2);
         TaskList &getTaskList();
+        PowerState &getState(){return powerState;}
 
     private:
+        PowerState powerState;
         TaskList taskList;
         TaskNode *currentTask;
         unsigned long stopMillis;
@@ -49,7 +57,6 @@ class MotorController {
         uint8_t read8(const int &addr);
         void write8(const int &addr, const int &d);
         void setPWM(const int &num, int on);
-        void wakeup();
         void handleEnc1Interrupt();
         void handleEnc2Interrupt();
         static void onEnc1Fall();
