@@ -1,6 +1,7 @@
 #include "MotorController.h"
-#include "Arduino.h"
+#include "IUtils.h"
 #include "Wire.h"
+#include "Arduino.h"
 #include "Inspirium.h"
 
 MotorController::MotorController() {
@@ -23,8 +24,6 @@ void MotorController::begin() {
 
     pinMode(DRIVER_FAULT_INT_PIN, INPUT_PULLDOWN);
 
-    _i2c = &Wire;
-    _i2c->begin();
     reset();
     setPWMFreq(DEFAULT_PWM_FREQ);
 
@@ -140,7 +139,7 @@ void MotorController::move(int motor1, int motor2) {
 
 void MotorController::reset() {
 
-    write8(PCA9685_MODE1, MODE1_RESTART);
+    write8(I2C_ADDR_PCA9685, PCA9685_MODE1, MODE1_RESTART);
     delay(10);
 
 }
@@ -158,13 +157,13 @@ void MotorController::setPWM(const int &num, int on) {
       on = 4095 - on;
     }
 
-    _i2c->beginTransmission(I2C_ADDR_PCA9685);
-    _i2c->write(0x06 + 4 * num); // 0x06 = PCA9685_LED0_ON_L
-    _i2c->write(on);
-    _i2c->write(on >> 8);
-    _i2c->write(off);
-    _i2c->write(off >> 8);
-    _i2c->endTransmission();
+    Wire.beginTransmission(I2C_ADDR_PCA9685);
+    Wire.write(0x06 + 4 * num); // 0x06 = PCA9685_LED0_ON_L
+    Wire.write(on);
+    Wire.write(on >> 8);
+    Wire.write(off);
+    Wire.write(off >> 8);
+    Wire.endTransmission();
 
 }
 
@@ -187,13 +186,13 @@ void MotorController::setPWMFreq(int freq) {
       prescaleval = PCA9685_PRESCALE_MAX;
     uint8_t prescale = (uint8_t)prescaleval;
 
-    uint8_t oldmode = read8(PCA9685_MODE1);
+    uint8_t oldmode = read8(I2C_ADDR_PCA9685, PCA9685_MODE1);
     uint8_t newmode = (oldmode & ~MODE1_RESTART) | MODE1_SLEEP;
-    write8(PCA9685_MODE1, newmode);
-    write8(PCA9685_PRESCALE, prescale);
-    write8(PCA9685_MODE1, oldmode);
+    write8(I2C_ADDR_PCA9685, PCA9685_MODE1, newmode);
+    write8(I2C_ADDR_PCA9685, PCA9685_PRESCALE, prescale);
+    write8(I2C_ADDR_PCA9685, PCA9685_MODE1, oldmode);
     delay(5);
-    write8(PCA9685_MODE1, oldmode | MODE1_RESTART | MODE1_AI);
+    write8(I2C_ADDR_PCA9685, PCA9685_MODE1, oldmode | MODE1_RESTART | MODE1_AI);
 
 }
 
@@ -207,9 +206,9 @@ void MotorController::idle() {
     detachInterrupt(ENCODER_INTERRUPT_PIN_2);
     pinMode(ENCODER_INTERRUPT_PIN_1, INPUT_PULLDOWN);
     pinMode(ENCODER_INTERRUPT_PIN_2, INPUT_PULLDOWN);
-    uint8_t awake = read8(PCA9685_MODE1);
+    uint8_t awake = read8(I2C_ADDR_PCA9685, PCA9685_MODE1);
     uint8_t sleep = awake | MODE1_SLEEP;
-    write8(PCA9685_MODE1, sleep);
+    write8(I2C_ADDR_PCA9685, PCA9685_MODE1, sleep);
     delay(5);
     digitalWrite(DRIVER_EN_PIN, LOW);
 
@@ -223,9 +222,9 @@ void MotorController::wakeUp() {
     pinMode(ENCODER_INTERRUPT_PIN_2, INPUT_PULLUP);
     attachInterrupt(ENCODER_INTERRUPT_PIN_1, onEnc1Fall, FALLING);
     attachInterrupt(ENCODER_INTERRUPT_PIN_2, onEnc2Fall, FALLING);
-    uint8_t sleep = read8(PCA9685_MODE1);
+    uint8_t sleep = read8(I2C_ADDR_PCA9685, PCA9685_MODE1);
     uint8_t wakeup = sleep & ~MODE1_SLEEP;
-    write8(PCA9685_MODE1, wakeup);
+    write8(I2C_ADDR_PCA9685, PCA9685_MODE1, wakeup);
     digitalWrite(DRIVER_EN_PIN, HIGH);
 
     powerState = ACTIVE;
@@ -235,29 +234,8 @@ void MotorController::wakeUp() {
 void MotorController::sleep() {
 
     idle();
-    _i2c->end();
 
     powerState = SLEEPING;
-
-}
-
-uint8_t MotorController::read8(const int &addr) {
-
-    _i2c->beginTransmission(I2C_ADDR_PCA9685);
-    _i2c->write(addr);
-    _i2c->endTransmission();
-
-    _i2c->requestFrom(I2C_ADDR_PCA9685, (uint8_t)1);
-    return _i2c->read();
-
-}
-
-void MotorController::write8(const int &addr, const int &d) {
-
-    _i2c->beginTransmission(I2C_ADDR_PCA9685);
-    _i2c->write(addr);
-    _i2c->write(d);
-    _i2c->endTransmission();
 
 }
 

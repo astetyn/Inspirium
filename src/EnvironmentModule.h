@@ -1,8 +1,8 @@
 #ifndef ENVIRONMENT_MODULE_H
 #define ENVIRONMENT_MODULE_H
 
-#include "RTCZero.h"
-#include "Seeed_BME280.h"
+#include "libraries/L_RTCZero.h"
+#include "libraries/L_BME280.h"
 #include "PowerState.h"
 
 static const int BATT_PIN = 19;

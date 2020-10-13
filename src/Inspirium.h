@@ -1,18 +1,23 @@
 #ifndef INSPIRIUM_H
 #define INSPIRIUM_H
 
+#include "Arduino.h"
 #include "MotorController.h"
 #include "EnvironmentModule.h"
 #include "RadioModule.h"
-#include "PositionModule.h"
+#include "OrientationModule.h"
+#include "LocationModule.h"
 #include "LightModule.h"
 #include "StorageModule.h"
 #include "CameraModule.h"
+#include "PowerState.h"
 
 static const int EQP_PIN = 14;
 static const int POWER_3V3_PIN = 15;
 static const int POWER_5V_PIN = 16;
 static const int SOLAR_EN_PIN = 27;
+
+void awake();
 
 class InspiriumClass {
 
@@ -28,7 +33,7 @@ class InspiriumClass {
 
         void sleep();
 
-        void wakeUp();
+        void wakeUpFromSleep();
 
         void deepSleep(int hours, int minutes, int seconds, void (*callback)() = &awake);
 
@@ -43,23 +48,25 @@ class InspiriumClass {
         MotorController &getMC() {return motorController;}
         EnvironmentModule &getEnviro() {return environmentModule;}
         RadioModule &getRadio() {return radioModule;}
-        PositionModule &getPosition() {return positionModule;}
+        OrientationModule &getOrientation() {return orientationModule;}
+        LocationModule &getLocation() {return locationModule;}
         LightModule &getLights() {return lightModule;}
         StorageModule &getStorage() {return storageModule;}
         CameraModule &getCam() {return cameraModule;}
+        PowerState &getState(){return powerState;}
 
     private:
+        PowerState powerState;
         MotorController motorController;
         EnvironmentModule environmentModule;
         RadioModule radioModule;
-        PositionModule positionModule;
+        OrientationModule orientationModule;
+        LocationModule locationModule;
         LightModule lightModule;
         StorageModule storageModule;
         CameraModule cameraModule;
 
 };
-
-void awake();
 
 extern InspiriumClass Inspi;
 

@@ -1,8 +1,10 @@
 #ifndef CAMERA_MODULE_H
 #define CAMERA_MODULE_H
 
+//#include "libraries/L_ArduCAM.h"
 #include "ArduCAM.h"
 #include "PowerState.h"
+#include "stdint.h"
 
 static const int CAM_CS_PIN = 38;
 static const int BUFF_MAX = 64;
@@ -26,8 +28,9 @@ class CameraModule {
         void readFifoBurst();
         void addToBuff(uint8_t val);
         void completeBuff();
+        bool capturing = false;
         bool sdCard = false;
-        int buff_i;
+        int buff_i = 2;
         uint8_t buff[BUFF_MAX];
 
 };

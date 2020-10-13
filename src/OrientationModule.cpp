@@ -1,9 +1,9 @@
-#include "PositionModule.h"
+#include "OrientationModule.h"
 #include "Arduino.h"
 #include "Inspirium.h"
-#include "GNSSEncoder.h"
+#include "TaskList.h"
 
-void PositionModule::begin() {
+void OrientationModule::begin() {
 
     pinMode(ECHO_PIN, INPUT);
     pinMode(TRIG1_PIN, OUTPUT);
@@ -13,30 +13,10 @@ void PositionModule::begin() {
     pinMode(TRIG5_PIN, OUTPUT);
     pinMode(TRIG6_PIN, OUTPUT);
 
-    Serial1.begin(9600);
-
     powerState = ACTIVE;
 }
 
-void PositionModule::update() {
-    while(Serial1.available()>0){
-        gnss.encode(Serial1.read());
-        //SerialUSB.write(Serial1.read());
-    }
-    /*SerialUSB.println(gnss.satellites.value());
-    SerialUSB.println(gnss.location.lat());
-    SerialUSB.println(gnss.location.lng());
-    SerialUSB.println(gnss.altitude.meters());
-    SerialUSB.println(gnss.satellites.value());
-    SerialUSB.println(gnss.satellites.value());*/
-}
-
-void PositionModule::slowUpdate() {
-    //TODO recalculate pitch, roll, yaw
-    checkDistances();
-}
-
-void PositionModule::idle() {
+void OrientationModule::idle() {
 
     if(powerState != ACTIVE) {
         return;
@@ -46,23 +26,18 @@ void PositionModule::idle() {
 
 }
 
-void PositionModule::wakeUp() {
+void OrientationModule::wakeUp() {
 
     powerState = ACTIVE;
 
 }
 
-void PositionModule::sleep() {
+void OrientationModule::sleep() {
     
-    // RX+TX PINS NEO
-    pinMode(0, INPUT_PULLDOWN);
-    pinMode(1, INPUT_PULLDOWN);
-
-    powerState = SLEEPING;
 
 }
 
-void PositionModule::checkDistances() {
+void OrientationModule::checkDistances() {
 
     int m2 = measureDistance(TRIG2_PIN);
     int m5 = measureDistance(TRIG5_PIN);
@@ -85,7 +60,7 @@ void PositionModule::checkDistances() {
 
 }
 
-int PositionModule::measureDistance(const int &pin) {
+int OrientationModule::measureDistance(const int &pin) {
 
     digitalWrite(pin, LOW);
     delayMicroseconds(2);

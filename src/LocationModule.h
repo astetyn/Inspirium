@@ -1,7 +1,9 @@
-#ifndef GNSS_ENCODER_H
-#define GNSS_ENCODER_H
+#ifndef LOCATION_MODULE_H
+#define LOCATION_MODULE_H
 
-#include "Arduino.h"
+#include "stdint.h"
+#include "PowerState.h"
+#include "delay.h"
 
 #define _GPS_KMPH_PER_KNOT 1.852
 #define _GPS_MAX_FIELD_SIZE 15
@@ -19,7 +21,7 @@ struct RawDegrees {
 
 struct TinyGPSLocation {
 
-    friend class TinyGPSPlus;
+    friend class GNSSEncoder;
 
     bool isValid() const    { return valid; }
     bool isUpdated() const  { return updated; }
@@ -42,7 +44,7 @@ struct TinyGPSLocation {
 
 struct TinyGPSDate {
 
-    friend class TinyGPSPlus;
+    friend class GNSSEncoder;
 
     bool isValid() const       { return valid; }
     bool isUpdated() const     { return updated; }
@@ -65,7 +67,7 @@ struct TinyGPSDate {
 
 struct TinyGPSTime {
 
-    friend class TinyGPSPlus;
+    friend class GNSSEncoder;
 
     bool isValid() const       { return valid; }
     bool isUpdated() const     { return updated; }
@@ -88,7 +90,7 @@ struct TinyGPSTime {
 
 struct TinyGPSDecimal {
 
-    friend class TinyGPSPlus;
+    friend class GNSSEncoder;
 
     bool isValid() const    { return valid; }
     bool isUpdated() const  { return updated; }
@@ -108,7 +110,7 @@ struct TinyGPSDecimal {
 
 struct TinyGPSInteger {
 
-    friend class TinyGPSPlus;
+    friend class GNSSEncoder;
 
     bool isValid() const    { return valid; }
     bool isUpdated() const  { return updated; }
@@ -135,22 +137,20 @@ struct TinyGPSCourse : public TinyGPSDecimal {
 };
 
 struct TinyGPSAltitude : TinyGPSDecimal {
-   double meters()       { return value() / 100.0; }
+   double get()       { return value() / 100.0; }
 };
 
 struct TinyGPSHDOP : TinyGPSDecimal {
    double hdop() { return value() / 100.0; }
 };
 
-class TinyGPSPlus;
-
-class TinyGPSPlus {
+class GNSSEncoder {
 
     public:
 
-        TinyGPSPlus();
+        GNSSEncoder();
         bool encode(char c); // process one character received from GPS
-        TinyGPSPlus &operator << (char c) {encode(c); return *this;}
+        GNSSEncoder &operator << (char c) {encode(c); return *this;}
 
         TinyGPSLocation location;
         TinyGPSDate date;
@@ -194,6 +194,26 @@ class TinyGPSPlus {
         // internal utilities
         int fromHex(char a);
         bool endOfTermHandler();
+};
+
+class LocationModule {
+
+    public:
+
+        void begin();
+        void update();
+        void idle();
+        void wakeUp();
+        void sleep();
+        double getLat() {return gnss.location.lat();}
+        double getLng() {return gnss.location.lng();}
+        double getAlt() {return gnss.altitude.get();}
+        PowerState &getState(){return powerState;}
+
+    private:
+        PowerState powerState;
+        GNSSEncoder gnss = GNSSEncoder();
+
 };
 
 #endif

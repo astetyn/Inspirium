@@ -1,7 +1,6 @@
-#ifndef POSITION_MODULE_H
-#define POSITION_MODULE_H
+#ifndef ORIENTATION_MODULE_H
+#define ORIENTATION_MODULE_H
 
-#include "GNSSEncoder.h"
 #include "PowerState.h"
 
 static const int ECHO_PIN = 25;
@@ -12,13 +11,11 @@ static const int TRIG4_PIN = 17;
 static const int TRIG5_PIN = 18;
 static const int TRIG6_PIN = 8;
 
-class PositionModule {
+class OrientationModule {
 
     public:
 
         void begin();
-        void update();
-        void slowUpdate();
         void idle();
         void wakeUp();
         void sleep();
@@ -28,7 +25,6 @@ class PositionModule {
         PowerState powerState;
         void checkDistances();
         int measureDistance(const int &pin);
-        TinyGPSPlus gnss;
 
 };
 

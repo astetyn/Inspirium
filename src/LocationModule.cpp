@@ -1,11 +1,73 @@
-#include "GNSSEncoder.h"
+#include "LocationModule.h"
+#include "Arduino.h"
+#include "Inspirium.h"
 
-#define _GPRMCterm   "GPRMC"
-#define _GPGGAterm   "GPGGA"
-#define _GNRMCterm   "GNRMC"
-#define _GNGGAterm   "GNGGA"
+#define _GPRMCterm "GPRMC"
+#define _GPGGAterm "GPGGA"
+#define _GNRMCterm "GNRMC"
+#define _GNGGAterm "GNGGA"
 
-TinyGPSPlus::TinyGPSPlus()
+void LocationModule::begin() {
+
+    Serial1.begin(9600);
+
+    powerState = ACTIVE;
+}
+
+void LocationModule::update() {
+
+    if(powerState != ACTIVE) {
+        return;
+    }
+
+    while(Serial1.available()>0){
+        gnss.encode(Serial1.read());
+    }
+    /*SerialUSB.println(gnss.satellites.value());
+    SerialUSB.println(gnss.location.lat());
+    SerialUSB.println(gnss.location.lng());
+    SerialUSB.println(gnss.altitude.meters());
+    SerialUSB.println(gnss.satellites.value());
+    SerialUSB.println(gnss.satellites.value());*/
+}
+
+void LocationModule::idle() {
+
+    if(powerState != ACTIVE) {
+        return;
+    }
+
+    Serial1.end();
+
+    powerState = IDLE;
+
+}
+
+void LocationModule::wakeUp() {
+
+    Serial1.begin(9600);
+
+    powerState = ACTIVE;
+
+}
+
+void LocationModule::sleep() {
+    
+    if(Inspi.getState() != SLEEPING) {
+        return;
+    }
+
+    Serial1.end();
+
+    // RX+TX PINS NEO
+    pinMode(0, INPUT_PULLDOWN);
+    pinMode(1, INPUT_PULLDOWN);
+
+    powerState = SLEEPING;
+
+}
+
+GNSSEncoder::GNSSEncoder()
   :  parity(0)
   ,  isChecksumTerm(false)
   ,  curSentenceType(GPS_SENTENCE_OTHER)
@@ -23,7 +85,7 @@ TinyGPSPlus::TinyGPSPlus()
 // public methods
 //
 
-bool TinyGPSPlus::encode(char c) {
+bool GNSSEncoder::encode(char c) {
 
     encodedCharCount++;
 
@@ -65,7 +127,7 @@ bool TinyGPSPlus::encode(char c) {
 //
 // internal utilities
 //
-int TinyGPSPlus::fromHex(char a) {
+int GNSSEncoder::fromHex(char a) {
 
     if(a >= 'A' && a <= 'F'){
         return a - 'A' + 10;
@@ -79,7 +141,7 @@ int TinyGPSPlus::fromHex(char a) {
 
 // static
 // Parse a (potentially negative) number with up to 2 decimal digits -xxxx.yy
-int TinyGPSPlus::parseDecimal(const char *term) {
+int GNSSEncoder::parseDecimal(const char *term) {
     bool negative = *term == '-';
     if(negative) ++term;
     int ret = 100 * (int)atol(term);
@@ -97,7 +159,7 @@ int TinyGPSPlus::parseDecimal(const char *term) {
 
 // static
 // Parse degrees in that funny NMEA format DDMM.MMMM
-void TinyGPSPlus::parseDegrees(const char *term, RawDegrees &deg) {
+void GNSSEncoder::parseDegrees(const char *term, RawDegrees &deg) {
 
     int leftOfDecimal = (int)atol(term);
     int minutes = (int)(leftOfDecimal % 100);
@@ -125,7 +187,7 @@ void TinyGPSPlus::parseDegrees(const char *term, RawDegrees &deg) {
 
 // Processes a just-completed term
 // Returns true if new sentence has just passed checksum test and is validated
-bool TinyGPSPlus::endOfTermHandler() {
+bool GNSSEncoder::endOfTermHandler() {
     // If it's the checksum term, and the checksum checks out, commit
     if(isChecksumTerm) {
         byte checksum = 16 * fromHex(term[0]) + fromHex(term[1]);
@@ -230,7 +292,7 @@ bool TinyGPSPlus::endOfTermHandler() {
 }
 
 /* static */
-double TinyGPSPlus::distanceBetween(double lat1, double long1, double lat2, double long2) {
+double GNSSEncoder::distanceBetween(double lat1, double long1, double lat2, double long2) {
     // returns distance in meters between two positions, both specified
     // as signed decimal-degrees latitude and longitude. Uses great-circle
     // distance computation for hypothetical sphere of radius 6372795 meters.
@@ -254,7 +316,7 @@ double TinyGPSPlus::distanceBetween(double lat1, double long1, double lat2, doub
     return delta * 6372795;
 }
 
-double TinyGPSPlus::courseTo(double lat1, double long1, double lat2, double long2) {
+double GNSSEncoder::courseTo(double lat1, double long1, double lat2, double long2) {
     // returns course in degrees (North=0, West=270) from position 1 to position 2,
     // both specified as signed decimal-degrees latitude and longitude.
     // Because Earth is no exact sphere, calculated course may be off by a tiny fraction.
@@ -280,11 +342,11 @@ void TinyGPSLocation::commit() {
 }
 
 void TinyGPSLocation::setLatitude(const char *term) {
-    TinyGPSPlus::parseDegrees(term, rawNewLatData);
+    GNSSEncoder::parseDegrees(term, rawNewLatData);
 }
 
 void TinyGPSLocation::setLongitude(const char *term) {
-    TinyGPSPlus::parseDegrees(term, rawNewLngData);
+    GNSSEncoder::parseDegrees(term, rawNewLngData);
 }
 
 double TinyGPSLocation::lat() {
@@ -312,7 +374,7 @@ void TinyGPSTime::commit() {
 }
 
 void TinyGPSTime::setTime(const char *term) {
-    newTime = (int)TinyGPSPlus::parseDecimal(term);
+    newTime = (int)GNSSEncoder::parseDecimal(term);
 }
 
 void TinyGPSDate::setDate(const char *term) {
@@ -357,7 +419,7 @@ void TinyGPSDecimal::commit() {
 }
 
 void TinyGPSDecimal::set(const char *term) {
-    newval = TinyGPSPlus::parseDecimal(term);
+    newval = GNSSEncoder::parseDecimal(term);
 }
 
 void TinyGPSInteger::commit() {

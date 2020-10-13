@@ -1,7 +1,6 @@
 #ifndef MOTOR_CONTROLLER_H
 #define MOTOR_CONTROLLER_H
 
-#include "Wire.h"
 #include "TaskList.h"
 #include "PowerState.h"
 
@@ -53,9 +52,6 @@ class MotorController {
         int stepsEnc2;
         int stepsToPass1;
         int stepsToPass2;
-        TwoWire *_i2c;
-        uint8_t read8(const int &addr);
-        void write8(const int &addr, const int &d);
         void setPWM(const int &num, int on);
         void handleEnc1Interrupt();
         void handleEnc2Interrupt();

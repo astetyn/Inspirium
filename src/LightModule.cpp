@@ -1,6 +1,5 @@
 #include "LightModule.h"
 #include "Arduino.h"
-#include "Adafruit_NeoPixel.h"
 
 void LightModule::begin() {
 
@@ -31,7 +30,7 @@ void LightModule::idle() {
     }
 
     showColor(0, 0, 0);
-    digitalWrite(MAIN_LED_PIN, LOW);
+    turnOffLights();
     powerState = IDLE;
 
 }
@@ -39,8 +38,8 @@ void LightModule::idle() {
 void LightModule::sleep() {
 
     showColor(0, 0, 0);
-    digitalWrite(MAIN_LED_PIN, LOW);
     digitalWrite(NEO_LED_PIN, LOW);
+    turnOffLights();
 
     powerState = SLEEPING;
     
@@ -56,12 +55,14 @@ void LightModule::shineMillis(const int &ms) {
 // Turns the main lights on.
 void LightModule::turnOnLights() {
     digitalWrite(MAIN_LED_PIN, HIGH);
+    lightsOn = true;
     powerState = ACTIVE;
 }
 
 // Turns the main lights off.
 void LightModule::turnOffLights() {
     digitalWrite(MAIN_LED_PIN, LOW);
+    lightsOn = false;
 }
 
 // Sets the color of the Neo pixel and show it.

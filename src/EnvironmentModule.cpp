@@ -1,7 +1,5 @@
 #include "EnvironmentModule.h"
 #include "Arduino.h"
-#include "RTCZero.h"
-#include "Seeed_BME280.h"
 
 void EnvironmentModule::begin() {
 
