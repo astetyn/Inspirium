@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "libraries/L_LoRa.h"
 #include "Inspirium.h"
+#include "IUtils.h"
 
 void RadioModule::begin(void (*callback)(int)) {
 
@@ -43,78 +44,31 @@ void RadioModule::sleep() {
 
 }
 
-void RadioModule::send(const uint8_t *buffer, const int &len) {
+// Sends data with key, flag and buffer. Note that this is async and you can check if data has been
+// sent with isSending().
+void RadioModule::send(const uint8_t flag, const uint8_t *buffer, const int &len) {
 
-    if(powerState == IDLE) {
-        wakeUp();
-    }
+    if(sending) return;
 
-    PowerState camLastState = Inspi.getCam().getState();
+    if(len>MAX_PAYLOAD) return;
 
-    if(camLastState == IDLE) {
-        Inspi.getCam().wakeUp();
-    }
+    if(powerState == UNAVAILABLE) return;
 
-    if(len>MAX_PAYLOAD) {
-        return;
-    }
+    if(powerState == IDLE) wakeUp();
 
-    LoRa.beginPacket();
-    LoRa.write(buffer, len);
-    LoRa.endPacket();
+    if(Inspi.getCam().getState() == IDLE) return;
 
-    if(listening) {
-        listen();
-    }
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().idle();
-    }
-
-}
-
-void RadioModule::sendFlag(uint8_t flag) {
-
-    if(powerState == IDLE) {
-        wakeUp();
-    }
-
-    PowerState camLastState = Inspi.getCam().getState();
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().wakeUp();
-    }
+    sending = true;
 
     LoRa.beginPacket();
     LoRa.write(FL_KEY);
     LoRa.write(flag);
-    LoRa.endPacket();
-
-    if(listening) {
-        listen();
-    }
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().idle();
-    }
+    LoRa.write(buffer, len);
+    LoRa.endPacket(true);
 
 }
 
 void RadioModule::sendStatus() {
-
-    if(powerState == IDLE) {
-        wakeUp();
-    }
-
-    SerialUSB.println("sending status");
-
-    PowerState camLastState = Inspi.getCam().getState();
-
-    SerialUSB.println(Inspi.getCam().getState());
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().wakeUp();
-    }
 
     float volts = Inspi.getEnviro().readBatteryVoltage();
     float temp = Inspi.getEnviro().readTemperature();
@@ -124,36 +78,25 @@ void RadioModule::sendStatus() {
     double lng = Inspi.getLocation().getLng();
     double alt = Inspi.getLocation().getAlt();
 
-    LoRa.beginPacket();
-    LoRa.write(FL_KEY);
-    LoRa.write(FL_STATUS);
-    LoRa.write((uint8_t)Inspi.getMC().getState());
-    LoRa.write((uint8_t)Inspi.getEnviro().getState());
-    LoRa.write((uint8_t)Inspi.getRadio().getState());
-    LoRa.write((uint8_t)Inspi.getOrientation().getState());
-    LoRa.write((uint8_t)Inspi.getLocation().getState());
-    LoRa.write((uint8_t)Inspi.getLights().getState());
-    LoRa.write((uint8_t)Inspi.getStorage().getState());
-    LoRa.write((uint8_t)camLastState);
-    LoRa.write((uint8_t *)(&Inspi.getLights().areLightsOn()), 1);
-    LoRa.write((uint8_t *)(&volts), 4);
-    LoRa.write((uint8_t *)(&temp), 4);
-    LoRa.write((uint8_t *)(&pressure), 4);
-    LoRa.write((uint8_t *)(&humidity), 4);
-    LoRa.write((uint8_t *)(&lat), 8);
-    LoRa.write((uint8_t *)(&lng), 8);
-    LoRa.write((uint8_t *)(&alt), 8);
-    LoRa.endPacket();
+    uint8_t buff[49];
+    buff[0] = Inspi.getMC().getState();
+    buff[1] = Inspi.getEnviro().getState();
+    buff[2] = Inspi.getRadio().getState();
+    buff[3] = Inspi.getOrientation().getState();
+    buff[4] = Inspi.getLocation().getState();
+    buff[5] = Inspi.getLights().getState();
+    buff[6] = Inspi.getStorage().getState();
+    buff[7] = Inspi.getCam().getState();
+    buff[8] = Inspi.getLights().areLightsOn();
+    ftba(volts, buff, 9);
+    ftba(temp, buff, 13);
+    itba(pressure, buff, 17);
+    itba(humidity, buff, 21);
+    dtba(lat, buff, 25);
+    dtba(lng, buff, 33);
+    dtba(alt, buff, 41);
 
-    if(listening) {
-        listen();
-    }
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().idle();
-    }
-
-    SerialUSB.println("status is now sending");
+    send(FL_STATUS, buff, 49);
 
 }
 
@@ -161,13 +104,13 @@ void RadioModule::sendStatus() {
 // Note that if message arrive, interrupt will take all processing power and time and may cause delays.
 void RadioModule::listen() {
 
-    if(forbidList) {
-        return;
-    }
+    if(forbidList) return;
 
-    if(powerState == IDLE) {
-        wakeUp();
-    }
+    if(sending) return;
+
+    if(Inspi.getCam().getState() == IDLE) return;
+
+    if(powerState == IDLE) wakeUp();    
 
     LoRa.receive();
     listening = true;
@@ -176,9 +119,7 @@ void RadioModule::listen() {
 
 void RadioModule::stopListening() {
 
-    if(forbidList) {
-        return;
-    }
+    if(forbidList) return;
 
     LoRa.idle();
     listening = false;
@@ -191,30 +132,18 @@ void RadioModule::forbidListening() {
 
 void RadioModule::allowListening() {
     forbidList = false;
-    if(listening) {
-        LoRa.receive();
-    }
+    if(listening) LoRa.receive();
 }
 
 void RadioModule::onReceive(const int &packetSize) {
 
-    PowerState camLastState = Inspi.getCam().getState();
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().wakeUp();
-    }
-
-    SerialUSB.println("Incoming packet with "+String(packetSize)+" bytes.");
+    if(Inspi.getCam().getState() == IDLE) return;
 
     uint8_t buff[packetSize];
     LoRa.readBytes(buff, packetSize);
 
-    if(camLastState == IDLE) {
-        Inspi.getCam().idle();
-    }
 
     if(buff[0] != FL_KEY){
-        SerialUSB.println("Invalid key.");
         return;
     }
 
@@ -222,22 +151,35 @@ void RadioModule::onReceive(const int &packetSize) {
 
         case FL_LIGHTS_ON:
             Inspi.getLights().turnOnLights();
+            send(FL_ACK, 0, 0);
             break;
 
         case FL_LIGHTS_OFF:
             Inspi.getLights().turnOffLights();
+            send(FL_ACK, 0, 0);
             break;
 
-        case FL_IMG_TAKE:
+        case FL_IMG:
             Inspi.getCam().captureAndSend();
+            send(FL_ACK, 0, 0);
+            break;
+
+        case FL_STATUS:
+            sendStatus();
             break;
     }
 
 }
 
+bool RadioModule::isSending() {
+    return sending;
+}
+
 void RadioModule::onTxDone() {
 
-    SerialUSB.println("TX completed.");
+    sending = false;
+
+    if(listening) listen();
 
 }
 

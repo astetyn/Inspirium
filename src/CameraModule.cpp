@@ -3,6 +3,7 @@
 #include "Arduino.h"
 #include "SPI.h"
 #include "RadioModule.h"
+#include "IUtils.h"
 
 void CameraModule::begin() {
 
@@ -23,7 +24,6 @@ void CameraModule::begin() {
 
     if (temp != 0x55) {
         powerState = UNAVAILABLE;
-        Inspi.getLights().showColor(255,0,0);
         return;
     }
     
@@ -33,57 +33,66 @@ void CameraModule::begin() {
     cam.rdSensorReg8_8(OV2640_CHIPID_LOW, &pid);
     if ((vid != 0x26 ) && (( pid != 0x41 ) || ( pid != 0x42 ))){
         powerState = UNAVAILABLE;
-        Inspi.getLights().showColor(255,0,0);
         return;
     }
 
     cam.set_format(JPEG);
     cam.InitCAM();
-    cam.OV2640_set_JPEG_size(OV2640_320x240);
+    cam.OV2640_set_JPEG_size(OV2640_160x120);
     delay(1000);
     cam.clear_fifo_flag();
 
     powerState = ACTIVE;
 
-    buff[0] = FL_KEY;
-    buff[1] = FL_IMG_PART;
-
 }
 
-void CameraModule::slowUpdate() {
+void CameraModule::update() {
 
-    if(!capturing) {
-        return;
+    if(bufferReady && !Inspi.getRadio().isSending()) {
+        Inspi.getRadio().send(FL_IMG, buff, buff_i);
+        bufferReady = false;
     }
 
-    if(cam.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)) {
-        delay(50);
-        readFifoBurst();
-        cam.clear_fifo_flag();
+    if(length != 0 && imgCompleted && !Inspi.getRadio().isSending()) {
+        Inspi.getRadio().allowListening();
+        length = 0;
+    }
+
+    if(!imgCompleted && !Inspi.getRadio().isSending()) {
+        if(length == 0) {
+            readFifoBurst(false);
+        }else{
+            readFifoBurst(true);
+        }
+    }
+
+    if(capturing && cam.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)) {
         capturing = false;
+        imgCompleted = false;
+        length = 0;
     }
 
 }
 
+// Put camera into low power mode.
+// Note that you can not use Radio and Storage with this power state.
 void CameraModule::idle() {
 
-    if(powerState != ACTIVE) {
-        return;
-    }
+    if(powerState != ACTIVE) return;
 
     cam.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
     powerState = IDLE;
 
 }
 
+// This will put camera into active mode. Note that this causes
+// significant delay.
 void CameraModule::wakeUp() {
 
-    if(powerState != IDLE) {
-        return;
-    }
+    if(powerState != IDLE) return;
 
     cam.clear_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
-    delay(10);
+    delay(800);
 
     powerState = ACTIVE;
     
@@ -91,9 +100,7 @@ void CameraModule::wakeUp() {
 
 void CameraModule::sleep() {
     
-    if(Inspi.getState() != SLEEPING) {
-        return;
-    }
+    if(Inspi.getState() != SLEEPING) return;
 
     pinMode(CAM_CS_PIN, INPUT_PULLDOWN);
     powerState = SLEEPING;
@@ -102,79 +109,57 @@ void CameraModule::sleep() {
 
 void CameraModule::captureToSD() {
 
-    if(powerState == IDLE) {
-        wakeUp();
-    }
+    if(powerState == IDLE) wakeUp();
 
 }
 
 void CameraModule::captureAndSend() {
 
-    if(powerState == IDLE) {
-        wakeUp();
-    }
+    if(powerState == IDLE) wakeUp();
 
     Inspi.getRadio().forbidListening();
 
-    cam.flush_fifo();
     cam.clear_fifo_flag();
     cam.start_capture();
     capturing = true;
 
-    delay(1000);
 }
 
-void CameraModule::readFifoBurst() {
+void CameraModule::readFifoBurst(bool is_header) {
 
-    uint8_t temp = 0, temp_last = 0;
-    bool is_header = false;
-    int length = 0;
-    length = cam.read_fifo_length();
+    buff_i = 0;
+
+    if(!is_header) length = cam.read_fifo_length();
+
     cam.CS_LOW();
     cam.set_fifo_burst();
-    temp = SPI.transfer(0x00);
-    length--;
+    
     while(length--) {
         temp_last = temp;
         temp = SPI.transfer(0x00);
         if(is_header) {
-            addToBuff(temp);
-        }else if ((temp == 0xD8) & (temp_last == 0xFF)) {
+            if(addToBuff(temp)) break;
+        }else if ((temp == 0xD8) && (temp_last == 0xFF)) {
             is_header = true;
             addToBuff(temp_last);
             addToBuff(temp);
-            delay(1);
         }
-        if((temp == 0xD9) && (temp_last == 0xFF)) {
+        if(temp == 0xD9 && temp_last == 0xFF) {
+            bufferReady = true;
+            imgCompleted = true;
             break;
         }
         delayMicroseconds(15);
     }
     cam.CS_HIGH();
-    is_header = false;
-    completeBuff();
-
 }
 
-void CameraModule::addToBuff(uint8_t val){
+bool CameraModule::addToBuff(int &val){
 
     buff[buff_i] = val;
     buff_i++;
 
-    if(buff_i == BUFF_MAX) {
-        cam.CS_HIGH();
-        Inspi.getRadio().send(buff, buff_i);
-        cam.CS_LOW();
-        cam.set_fifo_burst();
-        buff_i = 2;
-    }
-}
+    if(buff_i == BUFF_MAX) bufferReady = true;
 
-void CameraModule::completeBuff(){
-
-    Inspi.getRadio().send(buff, buff_i);
-    Inspi.getRadio().sendFlag(FL_IMG_COMPLETE);
-    buff_i = 2;
-    Inspi.getRadio().allowListening();
-  
+    return bufferReady;
 }

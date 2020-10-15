@@ -633,12 +633,6 @@ void LoRaClass::implicitHeaderMode()
 }
 
 void LoRaClass::handleDio0Rise() {
-    
-    PowerState camLastState = Inspi.getCam().getState();
-
-    if(camLastState == IDLE) {
-        Inspi.getCam().wakeUp();
-    }
 
     int irqFlags = readRegister(REG_IRQ_FLAGS);
 
@@ -657,18 +651,10 @@ void LoRaClass::handleDio0Rise() {
             // set FIFO address to current RX address
             writeRegister(REG_FIFO_ADDR_PTR, readRegister(REG_FIFO_RX_CURRENT_ADDR));
 
-            if(camLastState == IDLE) {
-                Inspi.getCam().idle();
-            }
-
             if (_onReceive) {
                 _onReceive(packetLength);
             }
         }else if ((irqFlags & IRQ_TX_DONE_MASK) != 0) {
-
-            if(camLastState == IDLE) {
-                Inspi.getCam().idle();
-            }
 
             if (_onTxDone) {
                 _onTxDone();

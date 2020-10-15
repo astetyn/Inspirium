@@ -42,6 +42,7 @@ void InspiriumClass::update() {
     motorController.update();
     locationModule.update();
     lightModule.update();
+    cameraModule.update();
 }
 
 // This will put all active modules into idle state.
@@ -53,7 +54,7 @@ void InspiriumClass::idle() {
     orientationModule.idle();
     locationModule.idle();
     lightModule.idle();
-    cameraModule.idle();
+    //cameraModule.idle();
 }
 
 // This will put all modules into sleep and disable 3.3EN. Processor remains active.
