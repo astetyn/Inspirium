@@ -31,7 +31,13 @@ void InspiriumClass::begin() {
     storageModule.begin();
     cameraModule.begin();
 
-    idle();
+    motorController.idle();
+    environmentModule.idle();
+    radioModule.idle();
+    orientationModule.idle();
+    locationModule.idle();
+    lightModule.idle();
+    cameraModule.idle();
 
     powerState = ACTIVE;
     
@@ -39,22 +45,13 @@ void InspiriumClass::begin() {
 
 // This update is heartbeat for whole library, try to call it as often as you can.
 void InspiriumClass::update() {
+
+    processMsg();
+
     motorController.update();
     locationModule.update();
     lightModule.update();
     cameraModule.update();
-}
-
-// This will put all active modules into idle state.
-void InspiriumClass::idle() {
-
-    motorController.idle();
-    environmentModule.idle();
-    radioModule.idle();
-    orientationModule.idle();
-    locationModule.idle();
-    lightModule.idle();
-    //cameraModule.idle();
 }
 
 // This will put all modules into sleep and disable 3.3EN. Processor remains active.
@@ -84,6 +81,11 @@ void InspiriumClass::sleep() {
 // This will begin all sleeping modules and enable 3.3EN.
 void InspiriumClass::wakeUpFromSleep() {
     
+    if(radioPSMode) {
+        SPI.begin();
+        radioPSMode = false;
+    }
+
     digitalWrite(POWER_3V3_PIN, HIGH);
 
     powerState = ACTIVE;
@@ -92,35 +94,44 @@ void InspiriumClass::wakeUpFromSleep() {
 
     if(motorController.getState() == SLEEPING) {
         motorController.begin();
+        motorController.idle();
     }
     if(environmentModule.getState() == SLEEPING) {
         environmentModule.begin();
+        environmentModule.idle();
     }
     if(radioModule.getState() == SLEEPING) {
         radioModule.begin();
+        radioModule.idle();
     }
     if(orientationModule.getState() == SLEEPING) {
         orientationModule.begin();
+        orientationModule.idle();
     }
     if(locationModule.getState() == SLEEPING) {
         locationModule.begin();
+        locationModule.idle();
     }
     if(lightModule.getState() == SLEEPING) {
         lightModule.begin();
+        lightModule.idle();
     }
     if(storageModule.getState() == SLEEPING) {
         storageModule.begin();
     }
     if(cameraModule.getState() == SLEEPING) {
         cameraModule.begin();
+        cameraModule.idle();
     }
 }
 
 // This will put device into the lowest possible current consuption.
 // It will pause code execution and will continue from call-point after time given.
 // Passed method will be called as soon as processor will wake up.
-// If any callback method is passed, Inspi.begin() will be executed.
+// If no callback method is passed, Inspi.begin() will be executed.
 void InspiriumClass::deepSleep(int hours, int minutes, int seconds, void (*callback)()) {
+
+    radioPSMode = false;
 
     sleep();
 
@@ -132,6 +143,23 @@ void InspiriumClass::deepSleep(int hours, int minutes, int seconds, void (*callb
     rtc.standbyMode();
 }
 
+// This will put device into the lowest possible current consuption.
+// Radio module  will be still active and receiving.
+void InspiriumClass::idleRadioMode() {
+
+    sleep();
+
+    radioPSMode = true;
+
+    SPI.begin();
+
+    radioModule.begin();
+    radioModule.listen();
+
+    disableSPI();
+
+}
+
 void InspiriumClass::disableSPI() {
 
     pinMode(22, INPUT_PULLDOWN);
@@ -140,9 +168,61 @@ void InspiriumClass::disableSPI() {
 
 }
 
-void awake() {
+void InspiriumClass::incomingMessage(IncomingPacket *packet) {
 
-    Inspi.begin();
+    incomingPacket = packet;
+
+}
+
+void InspiriumClass::processMsg() {
+
+    if(incomingPacket == 0) return;
+
+    switch(incomingPacket->subFeature) {
+
+        case FT_POWER_DS: {
+
+            int hours = bati(incomingPacket->buff, 3);
+            int minutes = bati(incomingPacket->buff, 7);
+            int seconds = bati(incomingPacket->buff, 11);
+
+            radioModule.sendAck();
+
+            while(radioModule.isSending()) delay(1);
+
+            deepSleep(hours, minutes, seconds);
+
+            idleRadioMode();
+            break;
+        }
+        case FT_POWER_AWAKE: {
+
+            radioModule.sendAck();
+
+            while(radioModule.isSending()) delay(1);
+            
+            wakeUpFromSleep();
+            cameraModule.wakeUp();
+            radioModule.listen();
+            break;
+        }   
+        case FT_POWER_IDLE: {
+
+            radioModule.sendAck();
+
+            while(radioModule.isSending()) delay(1);
+
+            idleRadioMode();
+            break;
+        }   
+    }
+
+    delete incomingPacket;
+    incomingPacket = 0;
+
+}
+
+void awake() {
 
 }
 

@@ -634,6 +634,9 @@ void LoRaClass::implicitHeaderMode()
 
 void LoRaClass::handleDio0Rise() {
 
+    //todo: prebudit cam, aby neboli problemy s spi? alebo iba aktivovat CAM_CS?
+    if(Inspi.isInRadioPSMode()) SPI.begin();
+
     int irqFlags = readRegister(REG_IRQ_FLAGS);
 
     // clear IRQ's

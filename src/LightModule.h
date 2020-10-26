@@ -8,6 +8,9 @@
 static const int MAIN_LED_PIN = 42;
 static const int NEO_LED_PIN = 9;
 
+const uint8_t FT_LIGHTS_OFF = 0x00;
+const uint8_t FT_LIGHTS_ON = 0x01;
+
 class LightModule {
 
     public:
@@ -19,6 +22,7 @@ class LightModule {
         void shineMillis(const int &ms);
         void turnOnLights();
         void turnOffLights();
+        void processMsg(const uint8_t flag, uint8_t buff[], const int &buffSize);
         bool &areLightsOn() {return lightsOn;}
         void showColor(uint8_t r, uint8_t g, uint8_t b);
         void setBrightness(uint8_t level);

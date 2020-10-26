@@ -44,9 +44,15 @@ void RadioModule::sleep() {
 
 }
 
+void RadioModule::sendAck() {
+
+    send(ACK_END, 0, 0);
+
+}
+
 // Sends data with key, flag and buffer. Note that this is async and you can check if data has been
 // sent with isSending().
-void RadioModule::send(const uint8_t flag, const uint8_t *buffer, const int &len) {
+void RadioModule::send(const uint8_t &ack, const uint8_t buffer [], const int &len) {
 
     if(sending) return;
 
@@ -58,45 +64,50 @@ void RadioModule::send(const uint8_t flag, const uint8_t *buffer, const int &len
 
     if(Inspi.getCam().getState() == IDLE) return;
 
+    if(Inspi.isInRadioPSMode()) SPI.begin();
+
     sending = true;
 
     LoRa.beginPacket();
-    LoRa.write(FL_KEY);
-    LoRa.write(flag);
+    LoRa.write(MFLTP_KEY);
+    LoRa.write(ack);
     LoRa.write(buffer, len);
     LoRa.endPacket(true);
 
+    if(Inspi.isInRadioPSMode()) Inspi.disableSPI();
+
 }
 
-void RadioModule::sendStatus() {
+void RadioModule::sendStatusMain() {
 
     float volts = Inspi.getEnviro().readBatteryVoltage();
     float temp = Inspi.getEnviro().readTemperature();
-    int pressure = Inspi.getEnviro().readPressure();
-    int humidity = Inspi.getEnviro().readHumidity();
     double lat = Inspi.getLocation().getLat();
     double lng = Inspi.getLocation().getLng();
-    double alt = Inspi.getLocation().getAlt();
 
-    uint8_t buff[49];
-    buff[0] = Inspi.getMC().getState();
-    buff[1] = Inspi.getEnviro().getState();
-    buff[2] = Inspi.getRadio().getState();
-    buff[3] = Inspi.getOrientation().getState();
-    buff[4] = Inspi.getLocation().getState();
-    buff[5] = Inspi.getLights().getState();
-    buff[6] = Inspi.getStorage().getState();
-    buff[7] = Inspi.getCam().getState();
-    buff[8] = Inspi.getLights().areLightsOn();
-    ftba(volts, buff, 9);
-    ftba(temp, buff, 13);
-    itba(pressure, buff, 17);
-    itba(humidity, buff, 21);
-    dtba(lat, buff, 25);
-    dtba(lng, buff, 33);
-    dtba(alt, buff, 41);
+    uint8_t buff[25];
+    buff[0] = Inspi.getLights().areLightsOn();
+    ftba(volts, buff, 1);
+    ftba(temp, buff, 5);
+    dtba(lat, buff, 9);
+    dtba(lng, buff, 17);
 
-    send(FL_STATUS, buff, 49);
+    send(ACK_END, buff, 25);
+
+}
+
+void RadioModule::sendStatusWeather() {
+
+    float temp = Inspi.getEnviro().readTemperature();
+    int pressure = Inspi.getEnviro().readPressure();
+    int humidity = Inspi.getEnviro().readHumidity();
+
+    uint8_t buff[12];
+    ftba(temp, buff, 0);
+    itba(pressure, buff, 4);
+    itba(humidity, buff, 8);
+
+    send(ACK_END, buff, 12);
 
 }
 
@@ -110,7 +121,7 @@ void RadioModule::listen() {
 
     if(Inspi.getCam().getState() == IDLE) return;
 
-    if(powerState == IDLE) wakeUp();    
+    if(powerState == IDLE) wakeUp();
 
     LoRa.receive();
     listening = true;
@@ -139,33 +150,52 @@ void RadioModule::onReceive(const int &packetSize) {
 
     if(Inspi.getCam().getState() == IDLE) return;
 
-    uint8_t buff[packetSize];
+    uint8_t *buff = new uint8_t[packetSize];
     LoRa.readBytes(buff, packetSize);
 
+    if(Inspi.isInRadioPSMode()) Inspi.disableSPI();
 
-    if(buff[0] != FL_KEY){
+    if(buff[0] != MFLTP_KEY){
         return;
     }
 
-    switch (buff[1]) {
+    uint8_t feature = buff[1];
+    uint8_t subFeature = buff[2];
 
-        case FL_LIGHTS_ON:
-            Inspi.getLights().turnOnLights();
-            send(FL_ACK, 0, 0);
+    switch (feature) {
+
+        case FT_LIGHTS:
+
+            Inspi.getLights().processMsg(subFeature, buff, packetSize);
+            delete[] buff;
             break;
 
-        case FL_LIGHTS_OFF:
-            Inspi.getLights().turnOffLights();
-            send(FL_ACK, 0, 0);
+        case FT_CAM:
+
+            Inspi.getCam().processMsg(subFeature, buff, packetSize);
+            delete[] buff;
             break;
 
-        case FL_IMG:
-            Inspi.getCam().captureAndSend();
-            send(FL_ACK, 0, 0);
+        case FT_STATUS:
+
+            if(subFeature == FT_STATUS_MAIN) {
+                sendStatusMain();
+            }else if(subFeature == FT_STATUS_WEATHER) {
+                sendStatusWeather();
+            }
+            delete[] buff;
             break;
 
-        case FL_STATUS:
-            sendStatus();
+        case FT_HANDLING:
+
+            Inspi.getMC().processMsg(subFeature, buff, packetSize);
+            delete[] buff;
+            break;
+
+        case FT_POWER:
+
+            IncomingPacket *packet = new IncomingPacket(subFeature, buff, packetSize);
+            Inspi.incomingMessage(packet);
             break;
     }
 

@@ -45,6 +45,8 @@ void EnvironmentModule::sleep() {
 // Returns air temperature in Celsius.
 float EnvironmentModule::readTemperature() {
 
+    if(powerState == SLEEPING) return -1;
+
     if(powerState == IDLE) {
         wakeUp();
     }
@@ -55,6 +57,8 @@ float EnvironmentModule::readTemperature() {
 // Returns air pressure in Pascals.
 int EnvironmentModule::readPressure() {
 
+    if(powerState == SLEEPING) return -1;
+
     if(powerState == IDLE) {
         wakeUp();
     }
@@ -64,6 +68,8 @@ int EnvironmentModule::readPressure() {
 
 // Returns air humidity in percentages.
 int EnvironmentModule::readHumidity() {
+
+    if(powerState == SLEEPING) return -1;
 
     if(powerState == IDLE) {
         wakeUp();

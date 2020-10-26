@@ -38,15 +38,12 @@ void MotorController::begin() {
 
 void MotorController::update() {
 
-    if(currentTask == 0){
-      return;
-    }
+    if(powerState != ACTIVE) return;
 
-    if(currentTask->type == TaskNode::TYPE_TIME) {
-      if(millis()>=stopMillis) {
-        executeNextTask();
-      }
-    }
+    if(currentTask == 0) return;
+
+    if(currentTask->type == TaskNode::TYPE_TIME && millis() >= stopMillis) executeNextTask();
+    
 }
 
 void MotorController::addTask(TaskNode *task) {
@@ -55,19 +52,21 @@ void MotorController::addTask(TaskNode *task) {
 
 }
 
+// Removes current task from list and load the next one in the list.
+// All is done without motor stop except the next task is null.
 void MotorController::executeNextTask() {
   
     if(powerState == IDLE) {
         wakeUp();
     }
 
-    if(currentTask!=0) {
+    if(currentTask != 0) {
       taskList.pop();
     }
 
     currentTask = taskList.front();
 
-    if(currentTask==0) {
+    if(currentTask == 0) {
       forceStop();
       return;
     }
@@ -237,6 +236,59 @@ void MotorController::sleep() {
 
     powerState = SLEEPING;
 
+}
+
+void MotorController::processMsg(const uint8_t subFeature, uint8_t buff[], const int &buffSize) {
+
+    if(subFeature == FT_HANDLING_MOVE_05S) {
+
+        int m1 = bati(buff, 3);
+        int m2 = bati(buff, 7);
+        
+        TimeTask *tt = new TimeTask();
+        tt->millis = 500;
+        tt->motor1 = m1;
+        tt->motor2 = m2;
+        addTask(tt);
+        executeNextTask();
+        
+    }else if(subFeature == FT_HANDLING_F_1S) {
+
+        TimeTask *tt = new TimeTask();
+        tt->millis = 1000;
+        tt->motor1 = 100;
+        tt->motor2 = 100;
+        addTask(tt);
+        executeNextTask();
+
+    }else if(subFeature == FT_HANDLING_B_1S) {
+
+        TimeTask *tt = new TimeTask();
+        tt->millis = 1000;
+        tt->motor1 = -100;
+        tt->motor2 = -100;
+        addTask(tt);
+        executeNextTask();
+
+    }else if(subFeature == FT_HANDLING_RR_1S) {
+
+        TimeTask *tt = new TimeTask();
+        tt->millis = 1000;
+        tt->motor1 = 100;
+        tt->motor2 = -100;
+        addTask(tt);
+        executeNextTask();
+
+    }else if(subFeature == FT_HANDLING_RL_1S) {
+
+        TimeTask *tt = new TimeTask();
+        tt->millis = 1000;
+        tt->motor1 = -100;
+        tt->motor2 = 100;
+        addTask(tt);
+        executeNextTask();
+    }
+    
 }
 
 void MotorController::handleEnc1Interrupt() {

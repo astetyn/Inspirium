@@ -50,16 +50,11 @@ void dtba(double val, uint8_t arr[], int offset) {
     
 }
 
-// Converts byte array into the int.
-int bati(uint8_t arr[]) {
-    
-    int val = 0;
-    
-    val = (int) arr[0];
-    val |=  (int) arr[1] << 8;
-    val |= (int) arr[2] << 16;
-    val |= (int) arr[3] << 24;
-    
-    return val;
-    
+int bati(uint8_t arr[], int offset) {
+
+    for(int i = 0; i<4;i++) {
+        converter.b[i] = arr[i+offset];
+    }
+    return converter.i;
+
 }

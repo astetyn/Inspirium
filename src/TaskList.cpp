@@ -37,7 +37,7 @@ void TaskList::pop() {
 
     head = head->next;
 
-    delete(temp);
+    delete temp;
 
 }
 

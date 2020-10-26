@@ -16,11 +16,9 @@ void LocationModule::begin() {
 
 void LocationModule::update() {
 
-    if(powerState != ACTIVE) {
-        return;
-    }
+    if(powerState != ACTIVE) return;
 
-    while(Serial1.available()>0){
+    while(Serial1.available() > 0){
         gnss.encode(Serial1.read());
     }
     /*SerialUSB.println(gnss.satellites.value());
@@ -37,6 +35,24 @@ void LocationModule::idle() {
         return;
     }
 
+    /*Serial1.write((uint8_t)0xB5);
+    Serial1.write((uint8_t)0xB5);
+    Serial1.write((uint8_t)0x62);
+    Serial1.write((uint8_t)0x02);
+    Serial1.write((uint8_t)0x41);
+    Serial1.write((uint8_t)0x08);
+    Serial1.write((uint8_t)0x00);
+    Serial1.write((uint8_t)0x10);
+    Serial1.write((uint8_t)0x27);
+    Serial1.write((uint8_t)0x00);
+    Serial1.write((uint8_t)0x00);
+    Serial1.write((uint8_t)0x02);
+    Serial1.write((uint8_t)0x00);
+    Serial1.write((uint8_t)0x00);
+    Serial1.write((uint8_t)0x00);
+    Serial1.write((uint8_t)0x84);
+    Serial1.write((uint8_t)0xCC);*/
+    
     Serial1.end();
 
     powerState = IDLE;

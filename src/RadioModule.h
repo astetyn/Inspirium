@@ -9,16 +9,20 @@ static const int LORA_RST_PIN = 4;
 static const int LORA_INT_PIN = 3;
 static const int MAX_PAYLOAD = 100;
 
-const uint8_t FL_KEY = 0x44;
-const uint8_t FL_INFO = 0x00;
-const uint8_t FL_STATUS = 0x01;
-const uint8_t FL_LIGHTS_ON = 0x02;
-const uint8_t FL_LIGHTS_OFF = 0x03;
-const uint8_t FL_IMG = 0x04;
-const uint8_t FL_ACK = 0xFF;
-const uint8_t FL_HANDLING_START = 0xEE;
-const uint8_t FL_HANDLING_STOP = 0xED;
-const uint8_t FL_NOT_AVAILABLE = 0x88;
+const uint8_t MFLTP_KEY = 0x44;
+
+const uint8_t FT_STATUS = 0x01;
+const uint8_t FT_LIGHTS = 0x02;
+const uint8_t FT_CAM = 0x03;
+const uint8_t FT_HANDLING = 0x04;
+const uint8_t FT_POWER = 0x05;
+
+const uint8_t FT_STATUS_MAIN = 0x00;
+const uint8_t FT_STATUS_WEATHER = 0x01;
+
+const uint8_t ACK_END = 0x00;
+const uint8_t ACK_CONTINUE = 0x01;
+const uint8_t ACK_FAILED = 0x02;
 
 void receiveISR(const int packetSize);
 void txDoneISR();
@@ -30,7 +34,8 @@ class RadioModule {
         void idle();
         void wakeUp();
         void sleep();
-        void send(const uint8_t flag, const uint8_t *buffer, const int &len);
+        void sendAck();
+        void send(const uint8_t &ack, const uint8_t buffer[], const int &len);
         void listen();
         void stopListening();
         void forbidListening();
@@ -45,7 +50,8 @@ class RadioModule {
         bool listening;
         bool sending;
         bool forbidList;
-        void sendStatus();
+        void sendStatusMain();
+        void sendStatusWeather();
 };
 
 #endif

@@ -1,5 +1,5 @@
 #include "LightModule.h"
-#include "Arduino.h"
+#include "Inspirium.h"
 
 void LightModule::begin() {
 
@@ -77,4 +77,16 @@ void LightModule::setBrightness(uint8_t level) {
     strip.setBrightness(level);
     strip.show();
     powerState = ACTIVE;
+}
+
+void LightModule::processMsg(const uint8_t flag, uint8_t buff[], const int &buffSize) {
+
+    if(flag == FT_LIGHTS_ON) {
+        turnOnLights();
+        Inspi.getRadio().sendAck();
+    }else if(flag == FT_LIGHTS_OFF) {
+        turnOffLights();
+        Inspi.getRadio().sendAck();
+    }
+
 }

@@ -48,8 +48,14 @@ void CameraModule::begin() {
 
 void CameraModule::update() {
 
+    if(powerState != ACTIVE) return;
+
     if(bufferReady && !Inspi.getRadio().isSending()) {
-        Inspi.getRadio().send(FL_IMG, buff, buff_i);
+        if(imgCompleted) {
+            Inspi.getRadio().send(ACK_END, buff, buff_i);
+        }else {
+            Inspi.getRadio().send(ACK_CONTINUE, buff, buff_i);
+        }
         bufferReady = false;
     }
 
@@ -81,6 +87,7 @@ void CameraModule::idle() {
     if(powerState != ACTIVE) return;
 
     cam.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
+    delay(100);
     powerState = IDLE;
 
 }
@@ -92,7 +99,7 @@ void CameraModule::wakeUp() {
     if(powerState != IDLE) return;
 
     cam.clear_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);
-    delay(800);
+    delay(1000);
 
     powerState = ACTIVE;
     
@@ -137,14 +144,16 @@ void CameraModule::readFifoBurst(bool is_header) {
     while(length--) {
         temp_last = temp;
         temp = SPI.transfer(0x00);
+
         if(is_header) {
             if(addToBuff(temp)) break;
-        }else if ((temp == 0xD8) && (temp_last == 0xFF)) {
+        }else if(temp == 0xD8 && temp_last == 0xFF) {
             is_header = true;
             addToBuff(temp_last);
             addToBuff(temp);
         }
-        if(temp == 0xD9 && temp_last == 0xFF) {
+
+        if((temp == 0xD9 && temp_last == 0xFF) || length == 0) {
             bufferReady = true;
             imgCompleted = true;
             break;
@@ -162,4 +171,24 @@ bool CameraModule::addToBuff(int &val){
     if(buff_i == BUFF_MAX) bufferReady = true;
 
     return bufferReady;
+}
+
+void CameraModule::processMsg(const uint8_t subFeature, uint8_t buff[], const int &buffSize) {
+
+    if(subFeature == FT_CAM_CAPTURE) {
+        captureAndSend();
+    }else if(subFeature == FT_CAM_160x120) {
+        cam.OV2640_set_JPEG_size(OV2640_160x120);
+    }else if(subFeature == FT_CAM_320x240) {
+        cam.OV2640_set_JPEG_size(OV2640_320x240);
+    }else if(subFeature == FT_CAM_640x480) {
+        cam.OV2640_set_JPEG_size(OV2640_640x480);
+    }else if(subFeature == FT_CAM_800x600) {
+        cam.OV2640_set_JPEG_size(OV2640_800x600);
+    }else if(subFeature == FT_CAM_1024x768) {
+        cam.OV2640_set_JPEG_size(OV2640_1024x768);
+    }else if(subFeature == FT_CAM_1600x1200) {
+        cam.OV2640_set_JPEG_size(OV2640_1600x1200);
+    }
+
 }

@@ -1,7 +1,7 @@
 #include "libraries/L_BME280.h"
-#include <Wire.h>
+#include "Wire.h"
 #include "IUtils.h"
-#include "cmath"
+#include "math.h"
 
 bool BME280::init(void) {
 
