@@ -97,6 +97,10 @@ void PowerModule::checkMsg() {
             deepSleep(t);
             disableSolar();
 
+            for(int i = 0; i < chargingDoneEvent.size(); i++) {
+                chargingDoneEvent.getAt(i)();
+            }
+
             break;
         }
     }

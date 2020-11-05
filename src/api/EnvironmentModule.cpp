@@ -22,6 +22,24 @@ void EnvironmentModule::begin() {
 
 void EnvironmentModule::update() {
     
+    if(powerState != PowerState::ACTIVE) return;
+
+    if(rtc.getEpoch() > lastMeasure + MEASURE_INTERVAL_SECS) {
+
+        ftba(readBatteryVoltage(), voltages, indexer * 4);
+        ftba(readTemperature(), temperatures, indexer * 4);
+        itba(readPressure(), pressures, indexer * 4);
+        itba(readHumidity(), humidities, indexer * 4);
+
+        indexer++;
+
+        if(indexer == RECORDS_COUNT) full = true;
+        
+        indexer %= RECORDS_COUNT;
+
+        lastMeasure = rtc.getEpoch();
+    }
+
 }
 
 void EnvironmentModule::sleep() {
@@ -81,4 +99,66 @@ void EnvironmentModule::checkMsg(const uint8_t subFeature, uint8_t buff[], const
         timeSynced = true;
 
     }
+}
+
+uint8_t *EnvironmentModule::getTempsRecs() {
+
+    if(!full) return temperatures;
+
+    // if full, we need to shift array
+    shiftArr(temperatures, RECORDS_COUNT*4, indexer*4);
+    return temperatures;
+
+}
+
+uint8_t *EnvironmentModule::getPressRecs() {
+    
+    if(!full) return pressures;
+
+    // if full, we need to shift array
+    shiftArr(pressures, RECORDS_COUNT*4, indexer*4);
+    return pressures;
+
+}
+
+uint8_t *EnvironmentModule::getHumisRecs() {
+
+    if(!full) return humidities;
+
+    // if full, we need to shift array
+    shiftArr(humidities, RECORDS_COUNT*4, indexer*4);
+    return humidities;
+
+}
+
+uint8_t *EnvironmentModule::getVoltsRecs() {
+
+    if(!full) return voltages;
+
+    // if full, we need to shift array
+    shiftArr(voltages, RECORDS_COUNT*4, indexer*4);
+    return voltages;
+
+}
+
+int EnvironmentModule::getRecsLen() {
+
+    if(!full) {
+        return indexer;
+    }
+    return RECORDS_COUNT;
+}
+
+void EnvironmentModule::shiftArr(uint8_t arr[], int len, int shift) {
+
+    uint8_t shiftArr[len];
+
+    for(int i = 0; i < len; i++) {
+        shiftArr[i] = arr[(i+shift)%len];
+    }
+
+    for(int i = 0; i < len; i++) {
+        arr[i] = shiftArr[i];
+    }
+
 }

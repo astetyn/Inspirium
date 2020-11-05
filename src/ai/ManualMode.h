@@ -23,6 +23,8 @@ class ManualMode {
 
         static void onPartyEnd();
 
+        static void onChargingDone();
+
         static void syncExpiredISR();
 
         static void extendTimeout(int hours, int minutes, int seconds);

@@ -8,12 +8,13 @@
 
 #include "stdint.h"
 
-static const int MAIN_LED_PIN = 42;
-static const int NEO_LED_PIN = 9;
+const int MAIN_LED_PIN = 42;
+const int NEO_LED_PIN = 9;
 
 const uint8_t FT_LIGHTS_OFF = 0x00;
 const uint8_t FT_LIGHTS_ON = 0x01;
-const uint8_t FT_LIGHTS_PARTY_ON = 0x02;
+const uint8_t FT_LIGHTS_RGB = 0x02;
+const uint8_t FT_LIGHTS_PARTY = 0x03;
 
 class LightModule {
 

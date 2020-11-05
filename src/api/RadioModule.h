@@ -7,10 +7,10 @@
 
 #include "stdint.h"
 
-static const int LORA_CS_PIN = 5;
-static const int LORA_RST_PIN = 4;
-static const int LORA_INT_PIN = 3;
-static const int MAX_PAYLOAD = 100;
+const int LORA_CS_PIN = 5;
+const int LORA_RST_PIN = 4;
+const int LORA_INT_PIN = 3;
+const int MAX_PAYLOAD = 100;
 
 const uint8_t MFLTP_KEY = 0x44;
 
@@ -23,6 +23,7 @@ const uint8_t FT_ENVIRO = 0x06;
 
 const uint8_t FT_STATUS_MAIN = 0x00;
 const uint8_t FT_STATUS_WEATHER = 0x01;
+const uint8_t FT_STATUS_BATT = 0x02;
 
 const uint8_t ACK_END = 0x00;
 const uint8_t ACK_CONTINUE = 0x01;
@@ -53,8 +54,6 @@ class RadioModule {
         bool listening;
         bool sending;
         bool forbidList;
-        void sendStatusMain();
-        void sendStatusWeather();
         EventList<void (*)(IPacket *)> receiveEvent;
 };
 

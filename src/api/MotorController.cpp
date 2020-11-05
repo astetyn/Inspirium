@@ -207,8 +207,8 @@ void MotorController::checkMsg(const uint8_t subFeature, uint8_t buff[], const i
 
     if(subFeature == FT_HANDLING_MOVE_05S) {
 
-        int m1 = bati(buff, 3);
-        int m2 = bati(buff, 7);
+        signed char m1 = buff[3];
+        signed char m2 = buff[4];
         
         TimeTask *tt = new TimeTask();
         tt->millis = 500;
@@ -217,41 +217,6 @@ void MotorController::checkMsg(const uint8_t subFeature, uint8_t buff[], const i
         addTask(tt);
         executeNextTask();
         
-    }else if(subFeature == FT_HANDLING_F_1S) {
-
-        TimeTask *tt = new TimeTask();
-        tt->millis = 1000;
-        tt->motor1 = 100;
-        tt->motor2 = 100;
-        addTask(tt);
-        executeNextTask();
-
-    }else if(subFeature == FT_HANDLING_B_1S) {
-
-        TimeTask *tt = new TimeTask();
-        tt->millis = 1000;
-        tt->motor1 = -100;
-        tt->motor2 = -100;
-        addTask(tt);
-        executeNextTask();
-
-    }else if(subFeature == FT_HANDLING_RR_1S) {
-
-        TimeTask *tt = new TimeTask();
-        tt->millis = 1000;
-        tt->motor1 = -100;
-        tt->motor2 = 100;
-        addTask(tt);
-        executeNextTask();
-
-    }else if(subFeature == FT_HANDLING_RL_1S) {
-
-        TimeTask *tt = new TimeTask();
-        tt->millis = 1000;
-        tt->motor1 = 100;
-        tt->motor2 = -100;
-        addTask(tt);
-        executeNextTask();
     }
     
 }

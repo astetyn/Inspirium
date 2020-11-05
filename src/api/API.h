@@ -11,6 +11,7 @@
 #include "api/CameraModule.h"
 #include "api/PowerModule.h"
 #include "api/IUtils.h"
+#include "api/StatusManager.h"
 
 class InspiAPIClass {
 
@@ -31,6 +32,7 @@ class InspiAPIClass {
         StorageModule &getStorage() {return storageModule;}
         CameraModule &getCam() {return cameraModule;}
         PowerModule &getPower() {return powerModule;}
+        StatusManager &getStatMng() {return statusManager;}
 
     private:
         MotorController motorController;
@@ -42,6 +44,7 @@ class InspiAPIClass {
         StorageModule storageModule;
         CameraModule cameraModule;
         PowerModule powerModule;
+        StatusManager statusManager;
 
 };
 

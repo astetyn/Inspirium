@@ -32,7 +32,6 @@ void LightModule::update() {
             for(int i = 0; i < partyEndEvent.size(); i++) {
                 partyEndEvent.getAt(i)();
             }
-
             party = false;
         }
 
@@ -112,12 +111,24 @@ void LightModule::checkMsg() {
             API.getRadio().sendAck();
             break;
         
-        case FT_LIGHTS_PARTY_ON:
+        case FT_LIGHTS_RGB: {
+            API.getPower().enable3V3();
+            delay(10);
+            API.getRadio().begin();
+            API.getRadio().listen();
+            API.getRadio().sendAck();
+            uint8_t r = packet->buff[3];
+            uint8_t g = packet->buff[4];
+            uint8_t b = packet->buff[5];
+            showColor(r, g, b);
+            break;
+        }
+        case FT_LIGHTS_PARTY:
             party = true;
             partyMillis = millis();
             partyStop = 10000;
             API.getPower().enable3V3();
-            API.getCam().begin();
+            delay(10);
             API.getRadio().begin();
             API.getRadio().sendAck();
             break;

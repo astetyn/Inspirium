@@ -3,7 +3,7 @@
 
 #include "api/PowerState.h"
 
-static const int SD_CS_PIN = 2;
+const int SD_CS_PIN = 2;
 
 class StorageModule {
 

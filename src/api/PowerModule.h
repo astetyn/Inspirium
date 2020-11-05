@@ -2,6 +2,7 @@
 #define POWER_MODULE_H
 
 #include "api/IUtils.h"
+#include "api/TaskList.h"
 
 const int EQP_PIN = 14;
 const int POWER_3V3_PIN = 15;
@@ -42,6 +43,8 @@ class PowerModule {
 
         void deepSleep(const Time &t);
 
+        EventList<void (*)()> &getCharDoneEvent() {return chargingDoneEvent;}
+
     private:
 
         bool active3V3;
@@ -50,6 +53,7 @@ class PowerModule {
         bool charging;
         IPacket *packet;
         static void dummyISR();
+        EventList<void (*)()> chargingDoneEvent;
 
 };
 

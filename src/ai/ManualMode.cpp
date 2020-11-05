@@ -14,8 +14,10 @@ void ManualMode::start() {
     API.getCam().getImgCompleteEvent().registerCallback(onImageCompleted);
     API.getRadio().getReceiveEvent().registerCallback(onPreReceive);
     API.getLights().getPartyEndEvent().registerCallback(onPartyEnd);
+    API.getPower().getCharDoneEvent().registerCallback(onChargingDone);
 
     SPI.begin();
+    API.getEnviro().begin();
     API.getRadio().begin();
     API.getRadio().listen();
 
@@ -49,6 +51,8 @@ void ManualMode::onImageCompleted() {
     API.getRadio().listen();
     API.disableSPI();
 
+    API.getEnviro().begin();
+
 }
 
 void ManualMode::onPreReceive(IPacket *packet) {
@@ -73,6 +77,21 @@ void ManualMode::onPartyEnd() {
     API.getRadio().begin();
     API.getRadio().listen();
     API.disableSPI();
+
+    API.getEnviro().begin();
+
+}
+
+void ManualMode::onChargingDone() {
+
+    extendTimeout(0, 0, LISTEN_SYNC_TIME);
+
+    SPI.begin();
+    API.getRadio().begin();
+    API.getRadio().listen();
+    API.disableSPI();
+
+    API.getEnviro().begin();
 
 }
 
@@ -109,11 +128,10 @@ void ManualMode::sleepEnd() {
     extendTimeout(0, 0, LISTEN_WINDOW_TIME);
     
     SPI.begin();
+    API.getEnviro().begin();
     API.getRadio().begin();
     API.getRadio().listen();
     API.disableSPI();
-
-    API.getEnviro().begin();
 
 }
 

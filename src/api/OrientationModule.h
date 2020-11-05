@@ -3,13 +3,13 @@
 
 #include "api/PowerState.h"
 
-static const int ECHO_PIN = 25;
-static const int TRIG1_PIN = 26;
-static const int TRIG2_PIN = 31;
-static const int TRIG3_PIN = 30;
-static const int TRIG4_PIN = 17;
-static const int TRIG5_PIN = 18;
-static const int TRIG6_PIN = 8;
+const int ECHO_PIN = 25;
+const int TRIG1_PIN = 26;
+const int TRIG2_PIN = 31;
+const int TRIG3_PIN = 30;
+const int TRIG4_PIN = 17;
+const int TRIG5_PIN = 18;
+const int TRIG6_PIN = 8;
 
 class OrientationModule {
 

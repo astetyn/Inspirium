@@ -65,39 +65,6 @@ void RadioModule::send(const uint8_t &ack, const uint8_t buffer[], const int &le
 
 }
 
-void RadioModule::sendStatusMain() {
-
-    float volts = API.getEnviro().readBatteryVoltage();
-    float temp = API.getEnviro().readTemperature();
-    double lat = API.getLocation().getLat();
-    double lng = API.getLocation().getLng();
-
-    uint8_t buff[25];
-    buff[0] = API.getLights().areLightsOn();
-    ftba(volts, buff, 1);
-    ftba(temp, buff, 5);
-    dtba(lat, buff, 9);
-    dtba(lng, buff, 17);
-
-    send(ACK_END, buff, 25);
-
-}
-
-void RadioModule::sendStatusWeather() {
-
-    float temp = API.getEnviro().readTemperature();
-    int pressure = API.getEnviro().readPressure();
-    int humidity = API.getEnviro().readHumidity();
-
-    uint8_t buff[12];
-    ftba(temp, buff, 0);
-    itba(pressure, buff, 4);
-    itba(humidity, buff, 8);
-
-    send(ACK_END, buff, 12);
-
-}
-
 // This will put radio into continuos receive mode. 
 // Note that if message arrive, interrupt will take all processing power and time and may cause delays.
 void RadioModule::listen() {
@@ -169,12 +136,7 @@ void RadioModule::onReceive(const int &packetSize) {
 
         case FT_STATUS:
 
-            if(subFeature == FT_STATUS_MAIN) {
-                sendStatusMain();
-            }else if(subFeature == FT_STATUS_WEATHER) {
-                sendStatusWeather();
-            }
-            delete packet;
+            API.getStatMng().incomingPacket(packet);
             break;
 
         case FT_HANDLING:

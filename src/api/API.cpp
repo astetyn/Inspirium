@@ -41,6 +41,7 @@ void InspiAPIClass::update() {
     cameraModule.update();
     environmentModule.update();
     powerModule.update();
+    statusManager.update();
 
 }
 
