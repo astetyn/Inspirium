@@ -11,9 +11,8 @@ const int GYR_INT_PIN = 11;
 
 const uint8_t FT_ENVIRO_SYNC = 0x00;
 
-const int MEASURE_INTERVAL_SECS = 10;
+const int MEASURE_INTERVAL_SECS = 3;
 const int RECORDS_COUNT = 48;
-
 
 class EnvironmentModule {
 
@@ -48,7 +47,7 @@ class EnvironmentModule {
         uint32_t lastMeasure = 0;
         int indexer = 0;
         bool full = false;
-        void shiftArr(uint8_t arr[], int len, int shift);
+        uint8_t *shiftArr(uint8_t arr[], int len, int shift);
 
 };
 

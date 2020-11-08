@@ -64,7 +64,6 @@ void ManualMode::onPreReceive(IPacket *packet) {
 
     extendTimeout(0, 0, LISTEN_SYNC_TIME);
     ManualMode::synced = true;
-    
 
 }
 

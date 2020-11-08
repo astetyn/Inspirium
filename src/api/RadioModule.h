@@ -10,7 +10,6 @@
 const int LORA_CS_PIN = 5;
 const int LORA_RST_PIN = 4;
 const int LORA_INT_PIN = 3;
-const int MAX_PAYLOAD = 100;
 
 const uint8_t MFLTP_KEY = 0x44;
 

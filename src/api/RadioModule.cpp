@@ -10,7 +10,8 @@ void RadioModule::begin(void (*callback)(int)) {
 
     LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_INT_PIN);
     LoRa.begin(868E6);
-    LoRa.setSpreadingFactor(9);
+    LoRa.setSpreadingFactor(7);
+    LoRa.setTxPower(20);
     LoRa.onReceive(receiveISR);
     LoRa.onTxDone(txDoneISR);
     listening = false;
@@ -46,8 +47,6 @@ void RadioModule::sendAck() {
 void RadioModule::send(const uint8_t &ack, const uint8_t buffer[], const int &len) {
 
     if(sending) return;
-
-    if(len > MAX_PAYLOAD) return;
 
     if(powerState == PowerState::UNAVAILABLE) return;
 

@@ -38,6 +38,10 @@ void StatusManager::sendStatusWeather() {
     while(API.getRadio().isSending()) delay(1);
     API.getRadio().send(ACK_END, humis, len);
 
+    delete[] temps;
+    delete[] press;
+    delete[] humis;
+
 }
 
 void StatusManager::sendStatusBatt() {
@@ -47,6 +51,8 @@ void StatusManager::sendStatusBatt() {
     uint8_t *voltages = API.getEnviro().getVoltsRecs();
 
     API.getRadio().send(ACK_END, voltages, len);
+
+    delete[] voltages;
 
 }
 

@@ -40,7 +40,7 @@ void CameraModule::begin() {
 
     cam.set_format(JPEG);
     cam.InitCAM();
-    cam.OV2640_set_JPEG_size(OV2640_160x120);
+    cam.OV2640_set_JPEG_size(resolution);
     delay(200);
     cam.clear_fifo_flag();
 
@@ -169,13 +169,35 @@ void CameraModule::checkMsg() {
 
     if(packet == 0) return;
 
-    if(packet->subFeature == FT_CAM_CAPTURE) {
-        API.getEnviro().getRTC().disableAlarm();
-        API.getPower().enable3V3();
-        delay(500);
-        begin();
-        API.getRadio().begin();
-        captureAndSend();
+    switch(packet->subFeature) {
+
+        case FT_CAM_CAPTURE:
+            API.getEnviro().getRTC().disableAlarm();
+            API.getPower().enable3V3();
+            delay(200);
+            begin();
+            API.getRadio().begin();
+            captureAndSend();
+            break;
+
+        case FT_CAM_160x120:
+            resolution = OV2640_160x120;
+            break;
+        case FT_CAM_320x240:
+            resolution = OV2640_320x240;
+            break;
+        case FT_CAM_640x480:
+            resolution = OV2640_640x480;
+            break;
+        case FT_CAM_800x600:
+            resolution = OV2640_800x600;
+            break;
+        case FT_CAM_1024x768:
+            resolution = OV2640_1024x768;
+            break;
+        case FT_CAM_1600x1200:
+            resolution = OV2640_1600x1200;
+            break;
     }
 
     delete packet;

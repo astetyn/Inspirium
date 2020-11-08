@@ -103,41 +103,45 @@ void EnvironmentModule::checkMsg(const uint8_t subFeature, uint8_t buff[], const
 
 uint8_t *EnvironmentModule::getTempsRecs() {
 
-    if(!full) return temperatures;
+    if(!full) {
+        return shiftArr(temperatures, indexer*4, 0);
+    }
 
     // if full, we need to shift array
-    shiftArr(temperatures, RECORDS_COUNT*4, indexer*4);
-    return temperatures;
+    return shiftArr(temperatures, RECORDS_COUNT*4, indexer*4);
 
 }
 
 uint8_t *EnvironmentModule::getPressRecs() {
     
-    if(!full) return pressures;
+    if(!full) {
+        return shiftArr(pressures, indexer*4, 0);
+    }
 
     // if full, we need to shift array
-    shiftArr(pressures, RECORDS_COUNT*4, indexer*4);
-    return pressures;
+    return shiftArr(pressures, RECORDS_COUNT*4, indexer*4);
 
 }
 
 uint8_t *EnvironmentModule::getHumisRecs() {
 
-    if(!full) return humidities;
+    if(!full) {
+        return shiftArr(humidities, indexer*4, 0);
+    }
 
     // if full, we need to shift array
-    shiftArr(humidities, RECORDS_COUNT*4, indexer*4);
-    return humidities;
+    return shiftArr(humidities, RECORDS_COUNT*4, indexer*4);
 
 }
 
 uint8_t *EnvironmentModule::getVoltsRecs() {
 
-    if(!full) return voltages;
+    if(!full) {
+        return shiftArr(voltages, indexer*4, 0);
+    }
 
     // if full, we need to shift array
-    shiftArr(voltages, RECORDS_COUNT*4, indexer*4);
-    return voltages;
+    return shiftArr(voltages, RECORDS_COUNT*4, indexer*4);
 
 }
 
@@ -149,16 +153,14 @@ int EnvironmentModule::getRecsLen() {
     return RECORDS_COUNT;
 }
 
-void EnvironmentModule::shiftArr(uint8_t arr[], int len, int shift) {
+uint8_t *EnvironmentModule::shiftArr(uint8_t arr[], int len, int shift) {
 
-    uint8_t shiftArr[len];
+    uint8_t* shiftArr = new uint8_t[len];
 
     for(int i = 0; i < len; i++) {
         shiftArr[i] = arr[(i+shift)%len];
     }
 
-    for(int i = 0; i < len; i++) {
-        arr[i] = shiftArr[i];
-    }
+    return shiftArr;
 
 }
