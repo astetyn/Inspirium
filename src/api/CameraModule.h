@@ -9,13 +9,15 @@
 
 const int CAM_CS_PIN = 38;
 const int BUFF_MAX = 200;
+
 const uint8_t FT_CAM_CAPTURE = 0x00;
 const uint8_t FT_CAM_160x120 = 0x01;
 const uint8_t FT_CAM_320x240 = 0x02;
 const uint8_t FT_CAM_640x480 = 0x03;
 const uint8_t FT_CAM_800x600 = 0x04;
 const uint8_t FT_CAM_1024x768 = 0x05;
-const uint8_t FT_CAM_1600x1200 = 0x06;
+const uint8_t FT_CAM_1280x1024 = 0x06;
+const uint8_t FT_CAM_1600x1200 = 0x07;
 
 class CameraModule {
 

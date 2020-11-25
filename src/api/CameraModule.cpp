@@ -41,7 +41,8 @@ void CameraModule::begin() {
     cam.set_format(JPEG);
     cam.InitCAM();
     cam.OV2640_set_JPEG_size(resolution);
-    delay(200);
+    delay(2000);
+
     cam.clear_fifo_flag();
 
     packet = 0;
@@ -182,21 +183,31 @@ void CameraModule::checkMsg() {
 
         case FT_CAM_160x120:
             resolution = OV2640_160x120;
+            API.getRadio().sendAck();
             break;
         case FT_CAM_320x240:
             resolution = OV2640_320x240;
+            API.getRadio().sendAck();
             break;
         case FT_CAM_640x480:
             resolution = OV2640_640x480;
+            API.getRadio().sendAck();
             break;
         case FT_CAM_800x600:
             resolution = OV2640_800x600;
+            API.getRadio().sendAck();
             break;
         case FT_CAM_1024x768:
             resolution = OV2640_1024x768;
+            API.getRadio().sendAck();
+            break;
+        case FT_CAM_1280x1024:
+            resolution = OV2640_1280x1024;
+            API.getRadio().sendAck();
             break;
         case FT_CAM_1600x1200:
             resolution = OV2640_1600x1200;
+            API.getRadio().sendAck();
             break;
     }
 

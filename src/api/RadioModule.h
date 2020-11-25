@@ -19,10 +19,11 @@ const uint8_t FT_CAM = 0x03;
 const uint8_t FT_HANDLING = 0x04;
 const uint8_t FT_POWER = 0x05;
 const uint8_t FT_ENVIRO = 0x06;
+const uint8_t FT_RADIO = 0x07;
 
-const uint8_t FT_STATUS_MAIN = 0x00;
-const uint8_t FT_STATUS_WEATHER = 0x01;
-const uint8_t FT_STATUS_BATT = 0x02;
+const uint8_t FT_RADIO_SF7 = 0x00;
+const uint8_t FT_RADIO_SF9 = 0x01;
+const uint8_t FT_RADIO_SF12 = 0x02;
 
 const uint8_t ACK_END = 0x00;
 const uint8_t ACK_CONTINUE = 0x01;
@@ -54,6 +55,7 @@ class RadioModule {
         bool sending;
         bool forbidList;
         EventList<void (*)(IPacket *)> receiveEvent;
+        int SF = 7;
 };
 
 #endif

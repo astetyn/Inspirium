@@ -11,8 +11,8 @@ const int GYR_INT_PIN = 11;
 
 const uint8_t FT_ENVIRO_SYNC = 0x00;
 
-const int MEASURE_INTERVAL_SECS = 3;
-const int RECORDS_COUNT = 48;
+const int MEASURE_INTERVAL_SECS = 600;
+const int RECORDS_COUNT = 144;
 
 class EnvironmentModule {
 

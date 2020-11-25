@@ -32,11 +32,29 @@ void StatusManager::sendStatusWeather() {
     uint8_t *press = API.getEnviro().getPressRecs();
     uint8_t *humis = API.getEnviro().getHumisRecs();
 
-    API.getRadio().send(ACK_CONTINUE, temps, len);
+    int maxPacketS = 200;
+
+    int c = len / maxPacketS;
+
+    for(int i = 0; i < c; i++) {
+        API.getRadio().send(ACK_CONTINUE, temps + i*maxPacketS, maxPacketS);
+        while(API.getRadio().isSending()) delay(1);
+    }
+    API.getRadio().send(ACK_CONTINUE, temps + c*maxPacketS, len - c*maxPacketS);
     while(API.getRadio().isSending()) delay(1);
-    API.getRadio().send(ACK_CONTINUE, press, len);
+    
+    for(int i = 0; i < c; i++) {
+        API.getRadio().send(ACK_CONTINUE, press + i*maxPacketS, maxPacketS);
+        while(API.getRadio().isSending()) delay(1);
+    }
+    API.getRadio().send(ACK_CONTINUE, press + c*maxPacketS, len - c*maxPacketS);
     while(API.getRadio().isSending()) delay(1);
-    API.getRadio().send(ACK_END, humis, len);
+
+    for(int i = 0; i < c; i++) {
+        API.getRadio().send(ACK_CONTINUE, humis + i*maxPacketS, maxPacketS);
+        while(API.getRadio().isSending()) delay(1);
+    }
+    API.getRadio().send(ACK_END, humis + c*maxPacketS, len - c*maxPacketS);
 
     delete[] temps;
     delete[] press;

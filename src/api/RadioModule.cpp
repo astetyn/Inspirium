@@ -10,7 +10,7 @@ void RadioModule::begin(void (*callback)(int)) {
 
     LoRa.setPins(LORA_CS_PIN, LORA_RST_PIN, LORA_INT_PIN);
     LoRa.begin(868E6);
-    LoRa.setSpreadingFactor(7);
+    LoRa.setSpreadingFactor(SF);
     LoRa.setTxPower(20);
     LoRa.onReceive(receiveISR);
     LoRa.onTxDone(txDoneISR);
@@ -149,6 +149,21 @@ void RadioModule::onReceive(const int &packetSize) {
         
         case FT_ENVIRO:
             API.getEnviro().checkMsg(subFeature, buff, packetSize);
+            delete packet;
+            break;
+        
+        case FT_RADIO:
+            
+            if(subFeature == FT_RADIO_SF7) {
+                SF = 7;
+            }else if(subFeature == FT_RADIO_SF9) {
+                SF = 9;
+            }else if(subFeature == FT_RADIO_SF12) {
+                SF = 12;
+            }
+
+            LoRa.setSpreadingFactor(SF);
+
             delete packet;
             break;
     }

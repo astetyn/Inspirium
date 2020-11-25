@@ -6,7 +6,7 @@
 
 #include "stdint.h"
 
-const uint8_t FT_HANDLING_RES = 0x00;
+const uint8_t FT_HANDLING_RESERVED = 0x00;
 const uint8_t FT_HANDLING_MOVE_05S = 0x01;
 const uint8_t FT_HANDLING_SENSORS = 0x06;
 
